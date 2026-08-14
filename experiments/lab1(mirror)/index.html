@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>几何光学在线实验室 | 凸透镜成像</title>
+<style>
+  :root {
+    --slate-50:#f8fafc; --slate-100:#f1f5f9; --slate-200:#e2e8f0; --slate-300:#cbd5e1;
+    --slate-400:#94a3b8; --slate-500:#64748b; --slate-600:#475569; --slate-700:#334155;
+    --slate-800:#1e293b; --slate-900:#0f172a;
+    --blue-50:#eff6ff; --blue-100:#dbeafe; --blue-200:#bfdbfe; --blue-500:#3b82f6;
+    --blue-600:#2563eb; --blue-700:#1d4ed8;
+    --amber-50:#fffbeb; --amber-100:#fef3c7; --amber-200:#fde68a; --amber-500:#f59e0b;
+    --amber-600:#d97706; --amber-700:#b45309; --amber-800:#92400e;
+    --violet-600:#7c3aed;
+    --green-50:#f0fdf4; --green-100:#dcfce7; --green-600:#16a34a;
+    --orange-50:#fff7ed; --orange-100:#ffedd5; --orange-600:#ea580c;
+    --red-400:#f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--slate-50); color: var(--slate-900);
+    overflow: hidden;
+  }
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* Header (breadcrumb + actions) */
+  .header {
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px; background: white;
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .breadcrumb { display: flex; align-items: center; font-size: 14px; color: var(--slate-500); }
+  .breadcrumb a { color: var(--slate-500); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--slate-700); }
+  .breadcrumb .sep { margin: 0 4px; color: var(--slate-300); }
+  .breadcrumb .current { color: var(--slate-700); font-weight: 500; }
+  .header-actions { display: flex; align-items: center; gap: 16px; }
+  .header-link {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; font-size: 14px; font-weight: 600;
+    color: var(--slate-600); text-decoration: none;
+    border-radius: 8px; transition: all .15s;
+  }
+  .header-link:hover { color: var(--blue-600); background: var(--blue-50); }
+  .header-divider { width: 1px; height: 24px; background: var(--slate-200); }
+  .icon-btn {
+    width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+    background: white; border: 1px solid var(--slate-200); border-radius: 8px;
+    color: var(--slate-500); cursor: pointer; transition: all .15s;
+  }
+  .icon-btn:hover { color: var(--blue-600); background: var(--blue-50); }
+
+  /* Main */
+  .main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+  /* Left column */
+  .left-col {
+    flex: 1; display: flex; flex-direction: column;
+    background: white; border-right: 1px solid var(--slate-200);
+    min-width: 0; min-height: 0;
+  }
+  .svg-wrap {
+    flex: 1; position: relative; background: var(--slate-50);
+    min-height: 400px; overflow: hidden;
+  }
+  .svg-wrap svg { width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+  .svg-title {
+    position: absolute; top: 16px; left: 16px; z-index: 10;
+    pointer-events: none;
+  }
+  .svg-title h2 {
+    font-size: 20px; font-weight: 700; color: var(--slate-800);
+    display: flex; align-items: center;
+  }
+  .svg-title h2 .ico {
+    display: inline-flex; width: 24px; height: 24px; margin-right: 8px;
+    color: var(--blue-600); align-items: center; justify-content: center;
+  }
+  .svg-title p { font-size: 12px; color: var(--slate-400); margin-top: 4px; }
+
+  /* Summary table */
+  .summary {
+    flex-shrink: 0; padding: 16px; background: white;
+    border-top: 1px solid var(--slate-200);
+  }
+  .summary h4 { font-size: 14px; font-weight: 700; color: var(--slate-700); margin-bottom: 12px; }
+  .summary table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .summary thead th {
+    background: var(--slate-50); color: var(--slate-500);
+    font-size: 12px; font-weight: 500; text-transform: uppercase;
+    padding: 8px 16px; text-align: left;
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .summary tbody td { padding: 10px 16px; color: var(--slate-600); border-bottom: 1px solid var(--slate-200); }
+  .summary tbody td:first-child { font-weight: 500; display: flex; align-items: center; }
+  .summary tbody tr.active { background: var(--amber-50); box-shadow: inset 0 0 0 1px var(--amber-200); }
+  .summary tbody tr.active td { color: var(--slate-700); }
+  .summary .dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; margin-right: 8px; flex-shrink: 0; }
+  .summary tbody tr.active .dot { background: var(--amber-500); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+
+  /* Right column */
+  .right-col {
+    width: 320px; flex-shrink: 0; background: white;
+    border-left: 1px solid var(--slate-200);
+    overflow-y: auto;
+  }
+  .panel { padding: 24px; border-bottom: 1px solid var(--slate-100); }
+  .panel h3 {
+    font-size: 14px; font-weight: 700; color: var(--slate-800);
+    display: flex; align-items: center; margin-bottom: 16px;
+  }
+  .panel h3 .ico { width: 16px; height: 16px; margin-right: 8px; }
+
+  .control { margin-bottom: 24px; }
+  .control:last-child { margin-bottom: 0; }
+  .control-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .control-label {
+    font-size: 14px; font-weight: 500; color: var(--slate-700);
+    display: flex; align-items: center;
+  }
+  .control-label .ico { width: 12px; height: 12px; margin-right: 4px; }
+  .control-value {
+    font-size: 12px; font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .control-value.amber { background: var(--amber-100); color: var(--amber-800); border: 1px solid var(--amber-200); }
+  .control-value.blue { background: var(--blue-100); color: var(--blue-700); border: 1px solid var(--blue-200); }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 8px; background: var(--slate-200);
+    border-radius: 8px; outline: none; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    cursor: pointer; border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%;
+    cursor: pointer; border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  input[type="range"].amber::-webkit-slider-thumb { background: var(--amber-500); }
+  input[type="range"].amber::-moz-range-thumb { background: var(--amber-500); }
+  input[type="range"].blue::-webkit-slider-thumb { background: var(--blue-500); }
+  input[type="range"].blue::-moz-range-thumb { background: var(--blue-500); }
+  .control-range-labels {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--slate-400); margin-top: 4px;
+  }
+
+  .data-card {
+    padding: 12px; background: white; border-radius: 8px;
+    border: 1px solid var(--slate-200); margin-bottom: 12px;
+  }
+  .data-card .label { font-size: 12px; color: var(--slate-500); margin-bottom: 4px; display: flex; align-items: center; }
+  .data-card .label .ico { width: 12px; height: 12px; margin-right: 4px; }
+  .data-card .value {
+    font-size: 20px; font-weight: 700; color: var(--slate-900);
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  .data-card .value .unit { font-size: 14px; color: var(--slate-400); font-weight: 400; }
+  .badge {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 12px; border-radius: 4px;
+    font-size: 12px; font-weight: 700;
+  }
+  .badge .v { text-transform: uppercase; }
+  .badge.green { background: var(--green-50); color: var(--green-600); border: 1px solid var(--green-100); }
+  .badge.blue  { background: var(--blue-50); color: var(--blue-600); border: 1px solid var(--blue-100); }
+  .badge.orange { background: var(--orange-50); color: var(--orange-600); border: 1px solid var(--orange-100); }
+  .badge.slate { background: var(--slate-100); color: var(--slate-600); border: 1px solid var(--slate-200); }
+  .badges { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+  .tips ul { list-style: none; padding: 0; font-size: 14px; color: var(--slate-600); line-height: 1.6; }
+  .tips li { position: relative; padding-left: 16px; margin-bottom: 12px; }
+  .tips li:last-child { margin-bottom: 0; }
+  .tips li::before {
+    content: ''; position: absolute; left: 0; top: 8px;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--blue-400);
+  }
+
+  @media (max-width: 900px) {
+    .main { flex-direction: column; }
+    .right-col { width: 100%; border-left: none; border-top: 1px solid var(--slate-200); }
+    .left-col { border-right: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header: breadcrumb + actions -->
+  <div class="header">
+    <nav class="breadcrumb">
+      <span class="current">几何光学在线实验室</span>
+    </nav>
+    <div class="header-actions">
+      <div class="header-divider"></div>
+      <button class="icon-btn" id="reset-btn" title="重置" aria-label="重置">↺</button>
+      <button class="icon-btn" id="fullscreen-btn" title="全屏" aria-label="全屏">⤢</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Left column -->
+    <div class="left-col">
+      <div class="svg-wrap">
+        <div class="svg-title">
+          <h2><span class="ico">⋮⋮⋮</span>凸透镜</h2>
+          <p>Convex Lens Lab Simulation</p>
+        </div>
+        <svg id="canvas" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+              <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#f1f5f9" stroke-width="1"></path>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)"></rect>
+          <line x1="0" y1="250" x2="800" y2="250" stroke="#64748b" stroke-width="2"></line>
+
+          <!-- Lens -->
+          <g>
+            <ellipse cx="400" cy="250" rx="6" ry="180" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"></ellipse>
+            <line x1="400" y1="50" x2="400" y2="450" stroke="#3b82f6" stroke-width="1" stroke-dasharray="5 5"></line>
+            <text x="400" y="40" text-anchor="middle" fill="#3b82f6" font-size="14" font-weight="500">凸透镜</text>
+          </g>
+
+          <!-- Focal points (populated by JS) -->
+          <g id="focal-points"></g>
+
+          <!-- Rays (populated by JS) -->
+          <g id="rays" stroke-width="2" fill="none"></g>
+
+          <!-- Image candle (populated by JS) -->
+          <g id="image-group"></g>
+
+          <!-- Object candle (draggable) -->
+          <g id="object-group" transform="translate(212.5, 250)" style="cursor: ew-resize;">
+            <line x1="0" y1="0" x2="0" y2="-200" stroke="transparent" stroke-width="40"></line>
+            <rect x="-8" y="-60" width="16" height="60" fill="#b45309" stroke="#78350f" stroke-width="2"></rect>
+            <path d="M 0 -70 Q 6 -85 0 -100 Q -6 -85 0 -70" fill="#fbbf24">
+              <animate attributeName="opacity" values="1;0.6;1" dur="1.6s" repeatCount="indefinite" />
+            </path>
+            <text x="0" y="35" text-anchor="middle" fill="#b45309" font-weight="bold" font-size="18">物</text>
+            <text id="object-label" x="0" y="-110" text-anchor="middle" fill="#d97706" font-size="12" font-family="ui-monospace,monospace">u=75cm</text>
+          </g>
+
+          <!-- Scale info -->
+          <g transform="translate(20, 470)">
+            <rect width="200" height="22" fill="white" rx="4" stroke="#e2e8f0"></rect>
+            <text id="scale-text" x="100" y="15" text-anchor="middle" font-size="12" fill="#64748b" font-family="ui-monospace,monospace">View Scale: 800x500 | 1cm ≈ 2.5px</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Summary table -->
+      <div class="summary">
+        <h4>凸透镜成像规律总结</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Condition (u)</th>
+              <th>Properties</th>
+              <th>Application</th>
+            </tr>
+          </thead>
+          <tbody id="summary-body">
+            <tr data-cond="u-gt-2f"><td><span class="dot"></span>u &gt; 2f</td><td>倒立, 缩小, 实像</td><td>Camera</td></tr>
+            <tr data-cond="u-eq-2f"><td><span class="dot"></span>u = 2f</td><td>倒立, 等大, 实像</td><td>Measure Distance</td></tr>
+            <tr data-cond="f-lt-u-lt-2f"><td><span class="dot"></span>f &lt; u &lt; 2f</td><td>倒立, 放大, 实像</td><td>Projector</td></tr>
+            <tr data-cond="u-eq-f"><td><span class="dot"></span>u = f</td><td>不成像 (光线平行)</td><td>Collimator</td></tr>
+            <tr data-cond="u-lt-f"><td><span class="dot"></span>u &lt; f</td><td>正立, 放大, 虚像</td><td>Magnifier</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="right-col">
+      <div class="panel">
+        <h3><span class="ico">⚙</span>控制面板</h3>
+        <div class="control">
+          <div class="control-head">
+            <label class="control-label" for="u-slider"><span class="ico">↔</span>物距 (u) - 蜡烛位置</label>
+            <span class="control-value amber" id="u-value">75 cm</span>
+          </div>
+          <input type="range" id="u-slider" min="10" max="150" step="1" value="75" class="amber">
+          <div class="control-range-labels"><span>凸透镜</span><span>150cm</span></div>
+        </div>
+        <div class="control">
+          <div class="control-head">
+            <label class="control-label" for="f-slider"><span class="ico">👁</span>焦距 (f) - 透镜参数</label>
+            <span class="control-value blue" id="f-value">35 cm</span>
+          </div>
+          <input type="range" id="f-slider" min="20" max="55" step="5" value="35" class="blue">
+        </div>
+      </div>
+
+      <div class="panel" style="background: rgba(248,250,252,0.5);">
+        <h3><span class="ico">📏</span>实验数据 (Data)</h3>
+        <div class="data-card">
+          <div class="label"><span class="ico">⋮⋮⋮</span>像距 (v)</div>
+          <div class="value" id="v-display">65.6 <span class="unit">cm</span></div>
+        </div>
+        <div class="data-card">
+          <div class="label"><span class="ico">👁</span>放大率 (m)</div>
+          <div class="value" id="m-display">0.88<span class="unit" style="font-size:18px;">x</span></div>
+        </div>
+        <div class="badges" id="status-badges"></div>
+      </div>
+
+      <div class="panel tips" style="background: rgba(239,246,255,0.3);">
+        <h3><span class="ico">💡</span>实验小贴士</h3>
+        <ul>
+          <li>试着将物距 (u) 调整到焦距 (f = 35) 附近。</li>
+          <li>你会发现像距急剧增大，这展示了当物体靠近焦点时，成像位置趋于无穷远的过程。</li>
+          <li>如果 u &lt; f，观察光路图左侧的虚像虚线。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---------- Constants ----------
+  const LENS_X = 400, AXIS_Y = 250, PX_PER_CM = 2.5;
+  const OBJ_HEIGHT_PX = 60;            // candle base height in px
+  const OBJ_TOP_Y = AXIS_Y - OBJ_HEIGHT_PX; // 190, where rays emanate
+  const SVG_W = 800, SVG_H = 500;
+  const FAR_X = 900;                    // rays extend beyond viewBox (clipped naturally)
+
+  // ---------- State ----------
+  const DEFAULTS = { u: 75, f: 35 };
+  const state = { ...DEFAULTS };
+
+  // ---------- DOM refs ----------
+  const $ = id => document.getElementById(id);
+  const uSlider = $('u-slider'), fSlider = $('f-slider');
+  const uValue = $('u-value'), fValue = $('f-value');
+  const vDisplay = $('v-display'), mDisplay = $('m-display');
+  const statusBadges = $('status-badges');
+  const focalPointsG = $('focal-points');
+  const raysG = $('rays');
+  const objectGroup = $('object-group');
+  const imageGroup = $('image-group');
+  const objectLabel = $('object-label');
+  const summaryBody = $('summary-body');
+  const svg = $('canvas');
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  function el(name, attrs = {}, parent = null) {
+    const e = document.createElementNS(SVG_NS, name);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  // ---------- Physics ----------
+  function computePhysics(u, f) {
+    // 1/u + 1/v = 1/f  →  v = uf/(u - f)   [signed: + real, - virtual, ∞ at u=f]
+    if (Math.abs(u - f) < 0.01) {
+      return { v: Infinity, m: Infinity, isReal: false, isInverted: false, status: 'no-image' };
+    }
+    const v = (u * f) / (u - f);
+    const m = Math.abs(v) / u;
+    const isReal = v > 0;
+    return { v, m, isReal, isInverted: isReal, status: isReal ? 'real' : 'virtual' };
+  }
+
+  // ---------- Render: focal points ----------
+  function renderFocalPoints(f) {
+    focalPointsG.innerHTML = '';
+    const fp = f * PX_PER_CM;
+    const pts = [
+      { x: LENS_X - fp, label: 'F' },
+      { x: LENS_X - 2 * fp, label: '2F' },
+      { x: LENS_X + fp, label: "F'" },
+      { x: LENS_X + 2 * fp, label: "2F'" },
+    ];
+    for (const p of pts) {
+      if (p.x < -20 || p.x > SVG_W + 20) continue;
+      el('circle', { cx: p.x, cy: AXIS_Y, r: 4, fill: '#94a3b8' }, focalPointsG);
+      const t = el('text', {
+        x: p.x, y: AXIS_Y + 20, 'text-anchor': 'middle',
+        'font-size': 12, fill: '#64748b', 'font-weight': 500
+      }, focalPointsG);
+      t.textContent = p.label;
+    }
+  }
+
+  // ---------- Render: rays ----------
+  function renderRays(u, f, phys) {
+    raysG.innerHTML = '';
+    const objX = LENS_X - u * PX_PER_CM;
+    const fp = f * PX_PER_CM;
+    const FpX = LENS_X + fp;       // F' position
+    const slope1 = (AXIS_Y - OBJ_TOP_Y) / fp;            // parallel ray after lens → through F'
+    const slope2 = (AXIS_Y - OBJ_TOP_Y) / (LENS_X - objX); // chief ray slope
+
+    // Ray 1 (parallel, red): obj_top → (LENS_X, obj_top) → through F' → extends right
+    const endY1 = OBJ_TOP_Y + slope1 * (FAR_X - LENS_X);
+    el('path', {
+      d: `M ${objX} ${OBJ_TOP_Y} L ${LENS_X} ${OBJ_TOP_Y} L ${FAR_X} ${endY1}`,
+      stroke: '#f87171', 'stroke-width': 2, fill: 'none', opacity: 0.85
+    }, raysG);
+
+    // Ray 2 (chief, blue): obj_top → (LENS_X, AXIS_Y) → extends straight
+    const endY2 = OBJ_TOP_Y + slope2 * (FAR_X - objX);
+    el('line', {
+      x1: objX, y1: OBJ_TOP_Y, x2: FAR_X, y2: endY2,
+      stroke: '#60a5fa', 'stroke-width': 2, opacity: 0.85
+    }, raysG);
+
+    // Virtual image case: dashed back-extensions to virtual image position
+    if (phys.status === 'virtual' && Number.isFinite(phys.v)) {
+      const imgX = LENS_X + phys.v * PX_PER_CM;
+      const backY1 = OBJ_TOP_Y + slope1 * (imgX - LENS_X);
+      const backY2 = OBJ_TOP_Y + slope2 * (imgX - objX);
+      el('line', {
+        x1: LENS_X, y1: OBJ_TOP_Y, x2: imgX, y2: backY1,
+        stroke: '#f87171', 'stroke-width': 2, 'stroke-dasharray': '5 5', opacity: 0.7
+      }, raysG);
+      el('line', {
+        x1: objX, y1: OBJ_TOP_Y, x2: imgX, y2: backY2,
+        stroke: '#60a5fa', 'stroke-width': 2, 'stroke-dasharray': '5 5', opacity: 0.7
+      }, raysG);
+    }
+  }
+
+  // ---------- Render: image candle ----------
+  function renderImage(u, f, phys) {
+    imageGroup.innerHTML = '';
+    if (!Number.isFinite(phys.v)) return;
+    const imgX = LENS_X + phys.v * PX_PER_CM;
+    if (imgX < -150 || imgX > SVG_W + 150) return;
+
+    const m = phys.m;
+    const scaleY = phys.isReal ? -m : m;
+    const opacity = phys.isReal ? 0.9 : 0.75;
+    const strokeDash = phys.isReal ? 'none' : '4 4';
+
+    const g = el('g', { transform: `translate(${imgX}, ${AXIS_Y})`, opacity: opacity }, imageGroup);
+    const inner = el('g', { transform: `scale(${m}, ${scaleY})` }, g);
+    // candle base
+    el('rect', {
+      x: -8, y: -60, width: 16, height: 60,
+      fill: '#78350f', 'fill-opacity': 0.6,
+      stroke: '#5c2b08', 'stroke-width': 2 / m,
+      'stroke-dasharray': strokeDash === 'none' ? undefined : strokeDash
+    }, inner);
+    // flame
+    el('path', {
+      d: 'M 0 -70 Q 6 -85 0 -100 Q -6 -85 0 -70',
+      fill: '#fbbf24', 'fill-opacity': 0.8
+    }, inner);
+
+    // label — placed on opposite side of axis from the candle
+    const labelY = phys.isReal ? (60 * m + 25) : 35;
+    const label = el('text', {
+      x: 0, y: labelY, 'text-anchor': 'middle',
+      fill: '#475569', 'font-weight': 'bold', 'font-size': 18
+    }, g);
+    label.textContent = '像';
+  }
+
+  // ---------- Render: data panel ----------
+  function renderData(phys) {
+    vDisplay.innerHTML = Number.isFinite(phys.v)
+      ? `${phys.v.toFixed(1)} <span class="unit">cm</span>`
+      : `∞ <span class="unit">cm</span>`;
+    mDisplay.innerHTML = Number.isFinite(phys.m)
+      ? `${phys.m.toFixed(2)}<span class="unit" style="font-size:18px;">x</span>`
+      : `∞<span class="unit" style="font-size:18px;">x</span>`;
+
+    statusBadges.innerHTML = '';
+    const noImage = phys.status === 'no-image';
+    const realText = noImage ? '不成像' : (phys.isReal ? '实像' : '虚像');
+    const orientText = noImage ? '—' : (phys.isInverted ? '倒立' : '正立');
+    const magText = noImage ? '—' : (phys.m > 1.005 ? '放大' : phys.m < 0.995 ? '缩小' : '等大');
+
+    const badges = [
+      { label: '实像 / 虚像', value: realText, cls: noImage ? 'slate' : 'green' },
+      { label: '正立 / 倒立', value: orientText, cls: noImage ? 'slate' : 'blue' },
+      { label: '放大 / 缩小', value: magText, cls: noImage ? 'slate' : 'orange' },
+    ];
+    for (const b of badges) {
+      const div = document.createElement('div');
+      div.className = `badge ${b.cls}`;
+      div.innerHTML = `<span>${b.label}</span><span class="v">${b.value}</span>`;
+      statusBadges.appendChild(div);
+    }
+  }
+
+  // ---------- Render: summary table highlight ----------
+  function renderSummary(u, f) {
+    let cond;
+    if (Math.abs(u - 2 * f) < 0.5) cond = 'u-eq-2f';
+    else if (Math.abs(u - f) < 0.5) cond = 'u-eq-f';
+    else if (u > 2 * f) cond = 'u-gt-2f';
+    else if (u > f) cond = 'f-lt-u-lt-2f';
+    else cond = 'u-lt-f';
+
+    summaryBody.querySelectorAll('tr').forEach(tr => {
+      tr.classList.toggle('active', tr.dataset.cond === cond);
+    });
+  }
+
+  // ---------- Main update ----------
+  function update() {
+    const { u, f } = state;
+    const phys = computePhysics(u, f);
+
+    uValue.textContent = `${u} cm`;
+    fValue.textContent = `${f} cm`;
+
+    const objX = LENS_X - u * PX_PER_CM;
+    objectGroup.setAttribute('transform', `translate(${objX}, ${AXIS_Y})`);
+    objectLabel.textContent = `u=${u}cm`;
+
+    renderFocalPoints(f);
+    renderRays(u, f, phys);
+    renderImage(u, f, phys);
+    renderData(phys);
+    renderSummary(u, f);
+  }
+
+  // ---------- Events: sliders ----------
+  uSlider.addEventListener('input', e => { state.u = +e.target.value; update(); });
+  fSlider.addEventListener('input', e => { state.f = +e.target.value; update(); });
+
+  // ---------- Reset ----------
+  $('reset-btn').addEventListener('click', () => {
+    Object.assign(state, DEFAULTS);
+    uSlider.value = state.u; fSlider.value = state.f;
+    update();
+  });
+
+  // ---------- Fullscreen ----------
+  $('fullscreen-btn').addEventListener('click', () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  });
+
+  // ---------- Drag object on SVG ----------
+  let dragging = false;
+  function clientToSVGX(clientX) {
+    const rect = svg.getBoundingClientRect();
+    const scale = Math.min(rect.width / SVG_W, rect.height / SVG_H);
+    const renderedW = SVG_W * scale;
+    const offsetX = (rect.width - renderedW) / 2;
+    return (clientX - rect.left - offsetX) / scale;
+  }
+  objectGroup.addEventListener('pointerdown', e => {
+    dragging = true;
+    objectGroup.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  svg.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const svgX = clientToSVGX(e.clientX);
+    const newU = (LENS_X - svgX) / PX_PER_CM;
+    const clamped = Math.max(10, Math.min(150, Math.round(newU)));
+    if (clamped !== state.u) {
+      state.u = clamped;
+      uSlider.value = clamped;
+      update();
+    }
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev =>
+    svg.addEventListener(ev, () => { dragging = false; })
+  );
+
+  // ---------- Init ----------
+  update();
+</script>
+</body>
+</html>
