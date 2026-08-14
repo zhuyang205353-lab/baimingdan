@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>探究浮力大小 - 阿基米德原理实验 | 虚拟实验室</title>
+<meta name="keywords" content="浮力实验, 阿基米德原理, 拖拽物体入水, 弹簧秤示数, 初中物理力学">
+<meta name="description" content="测量物体浸没液体时的浮力，验证F浮=ρ液gV排。">
+<meta property="og:url" content="https://devkittool.cn/pages/lab/buoyancy/">
+<meta property="og:title" content="浮力实验 - 阿基米德原理在线验证 | DevKit">
+<meta property="og:description" content="拖拽物体浸入水中，实时观察弹簧秤示数变化，验证阿基米德原理">
+<meta property="og:image" content="https://devkittool.cn/images/lab/buoyancy.png">
+<link rel="canonical" href="https://devkittool.cn/pages/lab/buoyancy/">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous" onload="if(typeof renderFormulas==='function')renderFormulas()"></script>
+<style>
+body{font-family:-apple-system,'SF Pro Display','Inter','PingFang SC',sans-serif;background:#F0F1F5;color:#1D1D1F}
+.purpose-tag svg{width:12px;height:12px}
+.lab-container{display:flex;flex-wrap:wrap;align-items:stretch}
+.canvas-area{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:16px;min-width:0}
+.canvas-wrapper{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 6px 20px rgba(0,0,0,0.04);overflow:hidden;width:100%;position:relative;user-select:none}
+.canvas-wrapper svg{width:100%;height:100%}
+.panel{width:280px;background:rgba(255,255,255,0.88);backdrop-filter:blur(20px);border-left:1px solid rgba(0,0,0,0.06);padding:14px;display:flex;flex-direction:column;gap:12px;flex-shrink:0}
+.panel-section{background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+.panel-section h3{font-size:11px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.panel-section h3 svg{width:12px;height:12px;color:#8E8E93}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:12px}
+.data-row:last-child{border-bottom:none}
+.data-label{color:#6B7280}
+.data-value{font-family:'JetBrains Mono',monospace;font-weight:600;color:#1D1D1F;font-size:12px}
+.formula-box{background:#EFF6FF;border-radius:8px;padding:10px;text-align:center;margin-top:6px}
+.liquid-btn{padding:6px 12px;border-radius:6px;border:1px solid #E5E7EB;background:#FAFBFC;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;flex:1;text-align:center}
+.liquid-btn:hover{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
+.liquid-btn.active{background:#1D4ED8;color:#fff;border-color:#1D4ED8}
+.record-btn{width:100%;padding:7px;border-radius:6px;border:1px solid #E5E7EB;background:#FAFBFC;color:#374151;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.record-btn svg{width:12px;height:12px}
+.record-btn:hover{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
+.data-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:10px}
+.data-table th{background:#F8F9FC;color:#6B7280;padding:4px 6px;text-align:center;font-weight:600;border:1px solid #E5E7EB}
+.data-table td{padding:4px 6px;text-align:center;border:1px solid #E5E7EB;font-family:'JetBrains Mono',monospace;font-size:10px}
+.reset-btn{width:100%;padding:9px;border-radius:8px;border:none;background:#F3F4F6;color:#374151;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:5px;margin-top:auto}
+.reset-btn svg{width:13px;height:13px}
+.reset-btn:hover{background:#E5E7EB}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:12px}
+.toggle-switch{width:36px;height:20px;border-radius:10px;background:#D1D5DB;cursor:pointer;position:relative;transition:background 0.2s}
+.toggle-switch.on{background:#1D4ED8}
+.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform 0.2s;box-shadow:0 1px 2px rgba(0,0,0,0.15)}
+.toggle-switch.on::after{transform:translateX(16px)}
+.range-control{margin-top:8px}
+.range-control label{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#374151;font-weight:600;margin-bottom:6px}
+.range-control input[type=range]{width:100%;accent-color:#1D4ED8;height:6px}
+.guide-overlay{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:10;animation:guideFade 4s ease-in-out forwards}
+.guide-label{position:absolute;font-size:12px;color:#1D4ED8;font-weight:600;background:rgba(239,246,255,0.92);padding:4px 10px;border-radius:6px;border:1px solid #BFDBFE;white-space:nowrap}
+@keyframes guideFade{0%,70%{opacity:1}100%{opacity:0}}
+
+/* Knowledge section below canvas */
+.knowledge-section{width:100%;padding:24px 16px 40px 16px}
+.knowledge-card{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 12px rgba(0,0,0,0.03);padding:0;margin-bottom:20px;overflow:hidden;border:1px solid rgba(0,0,0,0.04)}
+.knowledge-card .card-header{padding:16px 24px 12px;border-bottom:1px solid rgba(0,0,0,0.04);display:flex;align-items:center;gap:10px}
+.knowledge-card .card-header .accent{width:4px;height:24px;border-radius:2px;background:#1D4ED8;flex-shrink:0}
+.knowledge-card .card-header h2{font-size:16px;font-weight:700;color:#1D1D1F;margin:0}
+.knowledge-card .card-body{padding:16px 24px 20px}
+.knowledge-card p{font-size:13px;line-height:1.8;color:#4B5563;margin-bottom:8px}
+.knowledge-card .formula-lg{background:linear-gradient(135deg,#EFF6FF,#F5F3FF);border-radius:10px;padding:20px;text-align:center;margin:16px 0;border:1px solid #DBEAFE}
+.live-calc{margin-top:10px;padding:10px 12px;border-radius:8px;background:#F8FAFC;border:1px solid #E5E7EB;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;color:#1D1D1F;text-align:left}
+.live-calc .muted{color:#6B7280}
+.knowledge-card ul{font-size:13px;line-height:2;color:#4B5563;padding-left:20px}
+.knowledge-card.example{background:linear-gradient(180deg,#FAFBFE,#F0F4FF)}
+.knowledge-card.example .card-header .accent{background:#059669}
+.knowledge-card.example .solve{background:#fff;border-radius:8px;padding:14px 16px;margin-top:10px;border:1px solid #E5E7EB;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2;color:#374151}
+</style>
+  <link rel="stylesheet" crossorigin href="/assets/lab-base-BFGHqkZh.css">
+</head>
+<body>
+<div class="topbar">
+
+<div class="purpose-bar">
+  <div class="purpose-tag">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    拖拽物体浸入水中，验证阿基米德原理 F浮=ρ液gV排 · 初中力学
+  </div>
+</div>
+
+<div class="lab-container">
+  <div style="flex:1;min-width:0">
+    <div class="canvas-area">
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <svg id="canvas" viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="waterClip"><rect x="110" y="0" width="180" height="440"/></clipPath>
+            <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(59,130,246,0.15)"/>
+              <stop offset="100%" stop-color="rgba(59,130,246,0.35)"/>
+            </linearGradient>
+            <linearGradient id="springGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6B7280"/><stop offset="100%" stop-color="#9CA3AF"/>
+            </linearGradient>
+          <linearGradient id="alGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#93C5FD"/><stop offset="40%" stop-color="#60A5FA"/><stop offset="100%" stop-color="#3B82F6"/></linearGradient>
+          <linearGradient id="feGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#D1D5DB"/><stop offset="40%" stop-color="#9CA3AF"/><stop offset="100%" stop-color="#6B7280"/></linearGradient>
+          <linearGradient id="woodGrad" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0%" stop-color="#FCD34D"/><stop offset="30%" stop-color="#FBBF24"/><stop offset="60%" stop-color="#D97706"/><stop offset="100%" stop-color="#B45309"/></linearGradient>
+          </defs>
+
+          <rect width="700" height="440" fill="#FAFBFE"/>
+
+          <!-- ===== STAND (铁架台) ===== -->
+          <rect x="55" y="30" width="6" height="380" rx="2" fill="#6B7280"/>
+          <rect x="20" y="400" width="80" height="10" rx="3" fill="#6B7280"/>
+          <!-- Horizontal arm extending right over beaker -->
+          <rect x="58" y="40" width="160" height="4" rx="2" fill="#9CA3AF"/>
+
+          <!-- ===== SPRING SCALE (弹簧秤) ===== -->
+          <g id="springScale" transform="translate(200, 44)">
+            <!-- Body -->
+            <rect x="-16" y="0" width="32" height="100" rx="4" fill="#F3F4F6" stroke="#D1D5DB" stroke-width="1"/>
+            <!-- Scale markings -->
+            <line x1="-8" y1="10" x2="0" y2="10" stroke="#9CA3AF" stroke-width="0.5"/>
+            <text x="4" y="13" font-size="7" fill="#9CA3AF">0</text>
+            <line x1="-8" y1="28" x2="0" y2="28" stroke="#9CA3AF" stroke-width="0.5"/>
+            <text x="4" y="31" font-size="7" fill="#9CA3AF">1</text>
+            <line x1="-8" y1="46" x2="0" y2="46" stroke="#9CA3AF" stroke-width="0.5"/>
+            <text x="4" y="49" font-size="7" fill="#9CA3AF">2</text>
+            <line x1="-8" y1="64" x2="0" y2="64" stroke="#9CA3AF" stroke-width="0.5"/>
+            <text x="4" y="67" font-size="7" fill="#9CA3AF">3</text>
+            <line x1="-8" y1="82" x2="0" y2="82" stroke="#9CA3AF" stroke-width="0.5"/>
+            <text x="4" y="85" font-size="7" fill="#9CA3AF">4</text>
+            <!-- Pointer -->
+            <line id="scalePointer" x1="-10" y1="10" x2="2" y2="10" stroke="#DC2626" stroke-width="1.5"/>
+            <!-- Reading -->
+            <rect x="-14" y="88" width="28" height="14" rx="2" fill="#1D4ED8"/>
+            <text id="scaleReading" x="0" y="98" font-size="8" fill="#fff" text-anchor="middle" font-weight="700">0.0N</text>
+            <!-- Hook -->
+            <path d="M0,100 L0,110 Q0,116 -4,116 Q-8,116 -8,112" fill="none" stroke="#6B7280" stroke-width="1.5"/>
+            <!-- Spring coil -->
+            <g id="springCoil">
+              <path d="M0,10 L-6,16 L6,22 L-6,28 L6,34 L-6,40 L6,46 L-6,52 L6,58 L0,64" fill="none" stroke="#9CA3AF" stroke-width="1.5"/>
+            </g>
+          </g>
+
+          <!-- ===== WIRE from spring to object ===== -->
+          <line id="wireLine" x1="200" y1="160" x2="200" y2="200" stroke="#6B7280" stroke-width="1" stroke-dasharray="3,2"/>
+
+          <!-- ===== CONTAINER (烧杯) ===== -->
+          <g id="container">
+            <!-- Beaker — centered under spring scale at x=200 -->
+            <rect x="110" y="210" width="180" height="200" rx="3" fill="none" stroke="#93C5FD" stroke-width="2"/>
+            <rect x="105" y="206" width="190" height="8" rx="2" fill="none" stroke="#93C5FD" stroke-width="1.5"/>
+            <!-- Water -->
+            <rect id="waterBody" x="112" y="225" width="176" height="183" fill="url(#waterGrad)"/>
+            <!-- Water surface line -->
+            <line id="waterSurface" x1="112" y1="225" x2="288" y2="225" stroke="#3B82F6" stroke-width="1.5" opacity="0.6"/>
+            <!-- Water level label -->
+            <text id="waterLabel" x="295" y="229" font-size="9" fill="#3B82F6" font-weight="600">水面</text>
+            <!-- Graduation marks on beaker -->
+            <line x1="280" y1="300" x2="288" y2="300" stroke="#93C5FD" stroke-width="0.8"/>
+            <line x1="280" y1="340" x2="288" y2="340" stroke="#93C5FD" stroke-width="0.8"/>
+            <line x1="280" y1="380" x2="288" y2="380" stroke="#93C5FD" stroke-width="0.8"/>
+          </g>
+
+          <!-- ===== DRAGGABLE OBJECT ===== -->
+          <g id="objectGroup" style="cursor:grab;transition:none">
+            <rect id="objectBody" x="175" y="200" width="50" height="40" rx="4" fill="#60A5FA" stroke="#3B82F6" stroke-width="1.5"/>
+            <text id="objectLabel" x="200" y="224" font-size="10" fill="#fff" text-anchor="middle" font-weight="700">铝块</text>
+          </g>
+
+          <!-- ===== FORCE ARROWS ===== -->
+          <g id="forceArrows" opacity="0">
+            <!-- Gravity (down, red) -->
+            <g id="arrowG">
+              <line x1="140" y1="220" x2="140" y2="270" stroke="#DC2626" stroke-width="2"/>
+              <polygon points="135,268 140,278 145,268" fill="#DC2626"/>
+              <text x="150" y="260" font-size="10" fill="#DC2626" font-weight="700">G</text>
+            </g>
+            <!-- Buoyancy (up, blue) -->
+            <g id="arrowF">
+              <line x1="100" y1="240" x2="100" y2="200" stroke="#2563EB" stroke-width="2"/>
+              <polygon points="95,202 100,192 105,202" fill="#2563EB"/>
+              <text x="82" y="224" font-size="10" fill="#2563EB" font-weight="700">F浮</text>
+            </g>
+            <!-- Tension (up, green) -->
+            <g id="arrowT">
+              <line x1="120" y1="200" x2="120" y2="170" stroke="#059669" stroke-width="2"/>
+              <polygon points="115,172 120,162 125,172" fill="#059669"/>
+              <text x="128" y="184" font-size="10" fill="#059669" font-weight="700">F拉</text>
+            </g>
+          </g>
+
+          <!-- ===== MATERIAL SHELF (器材区) ===== -->
+          <g transform="translate(480, 50)">
+            <rect x="0" y="0" width="180" height="130" rx="10" fill="#F8FAFC" stroke="#E5E7EB" stroke-width="1"/>
+            <text x="90" y="18" font-size="10" fill="#9CA3AF" text-anchor="middle" font-weight="700">器材架</text>
+            <!-- Aluminum — metallic sheen -->
+            <g id="shelfAl" style="cursor:pointer" onclick="selectMaterial('al')">
+              <rect x="10" y="28" width="46" height="40" rx="3" fill="url(#alGrad)" stroke="#2563EB" stroke-width="1"/>
+              <rect x="14" y="32" width="20" height="2" rx="1" fill="rgba(255,255,255,0.3)"/>
+              <text x="33" y="54" font-size="9" fill="#fff" text-anchor="middle" font-weight="700">铝块</text>
+              <text x="33" y="78" font-size="8" fill="#6B7280" text-anchor="middle">2.7g/cm³</text>
+            </g>
+            <!-- Iron — dark metallic -->
+            <g id="shelfFe" style="cursor:pointer" onclick="selectMaterial('fe')">
+              <rect x="66" y="28" width="46" height="40" rx="3" fill="url(#feGrad)" stroke="#4B5563" stroke-width="1"/>
+              <rect x="70" y="32" width="20" height="2" rx="1" fill="rgba(255,255,255,0.2)"/>
+              <text x="89" y="54" font-size="9" fill="#fff" text-anchor="middle" font-weight="700">铁块</text>
+              <text x="89" y="78" font-size="8" fill="#6B7280" text-anchor="middle">7.8g/cm³</text>
+            </g>
+            <!-- Wood — grain texture -->
+            <g id="shelfWood" style="cursor:pointer" onclick="selectMaterial('wood')">
+              <rect x="122" y="28" width="46" height="40" rx="3" fill="url(#woodGrad)" stroke="#92400E" stroke-width="1"/>
+              <line x1="126" y1="35" x2="164" y2="35" stroke="rgba(146,64,14,0.2)" stroke-width="0.5"/>
+              <line x1="126" y1="42" x2="164" y2="42" stroke="rgba(146,64,14,0.15)" stroke-width="0.5"/>
+              <line x1="126" y1="49" x2="164" y2="49" stroke="rgba(146,64,14,0.2)" stroke-width="0.5"/>
+              <line x1="126" y1="56" x2="164" y2="56" stroke="rgba(146,64,14,0.15)" stroke-width="0.5"/>
+              <text x="145" y="54" font-size="9" fill="#fff" text-anchor="middle" font-weight="700">木块</text>
+              <text x="145" y="78" font-size="8" fill="#6B7280" text-anchor="middle">0.6g/cm³</text>
+            </g>
+            <!-- Selection indicator -->
+            <rect id="shelfSelect" x="8" y="28" width="50" height="40" rx="5" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-dasharray="4,2"/>
+            <!-- Hint -->
+            <text x="90" y="104" font-size="9" fill="#9CA3AF" text-anchor="middle">点击选择材料</text>
+            <text x="90" y="118" font-size="9" fill="#1D4ED8" text-anchor="middle" font-weight="600">拖拽物体浸入水中</text>
+          </g>
+
+          <!-- ===== STATUS HINT ===== -->
+          <g id="statusHint" transform="translate(480, 210)">
+            <rect x="0" y="0" width="180" height="32" rx="8" fill="rgba(239,246,255,0.9)" stroke="#BFDBFE" stroke-width="0.5"/>
+            <text id="statusText" x="90" y="20" font-size="11" fill="#1D4ED8" text-anchor="middle" font-weight="700">向下拖拽物体入水</text>
+          </g>
+
+          <!-- ===== IMMERSION % ===== -->
+          <g id="immersionDisplay" transform="translate(480, 260)" opacity="0">
+            <rect x="0" y="0" width="180" height="50" rx="8" fill="#fff" stroke="#E5E7EB" stroke-width="1"/>
+            <text x="90" y="18" font-size="9" fill="#6B7280" text-anchor="middle">浸入体积</text>
+            <text id="immersionPct" x="90" y="40" font-size="18" fill="#1D4ED8" text-anchor="middle" font-weight="800" font-family="JetBrains Mono, monospace">0%</text>
+          </g>
+
+          <!-- Ripple effect (hidden by default) -->
+          <g id="ripples" opacity="0">
+            <ellipse cx="120" cy="260" rx="30" ry="4" fill="none" stroke="#3B82F6" stroke-width="0.8" opacity="0.4"/>
+            <ellipse cx="120" cy="260" rx="50" ry="6" fill="none" stroke="#3B82F6" stroke-width="0.5" opacity="0.2"/>
+          </g>
+        </svg>
+
+        <div class="guide-overlay" id="guideOverlay">
+          <div class="guide-label" style="top:8%;right:5%">点击器材架选择材料</div>
+          <div class="guide-label" style="top:40%;left:8%">向下拖拽物体浸入水中</div>
+          <div class="guide-label" style="bottom:25%;left:15%">观察弹簧秤示数变化</div>
+          <div class="guide-label" style="bottom:10%;right:8%">切换液体验证公式</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end left column -->
+
+  <div class="panel">
+    <div class="panel-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16"/><path d="M12 4v16"/></svg> 体积调节</h3>
+      <div class="range-control">
+        <label for="volumeSlider"><span>体积 V</span><span class="data-value" id="volumeVal">100 cm³</span></label>
+        <input type="range" id="volumeSlider" min="50" max="200" step="10" value="100" oninput="setVolume(this.value)">
+      </div>
+      <div style="font-size:11px;color:#6B7280;line-height:1.6;margin-top:6px">体积改变时，质量和浮力会一起变化。</div>
+    </div>
+    <div class="panel-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> 物体参数</h3>
+      <div class="data-row"><span class="data-label">材质</span><span class="data-value" id="valMat">铝</span></div>
+      <div class="data-row"><span class="data-label">密度 ρ</span><span class="data-value" id="valRho">2.7 g/cm³</span></div>
+      <div class="data-row"><span class="data-label">体积 V</span><span class="data-value" id="valVol">100 cm³</span></div>
+      <div class="data-row"><span class="data-label">重力 G</span><span class="data-value" id="valG">2.70 N</span></div>
+    </div>
+
+    <div class="panel-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg> 液体选择</h3>
+      <div style="display:flex;gap:4px">
+        <button class="liquid-btn active" onclick="setLiquid('water')">水</button>
+        <button class="liquid-btn" onclick="setLiquid('salt')">盐水</button>
+        <button class="liquid-btn" onclick="setLiquid('oil')">油</button>
+      </div>
+      <div class="data-row" style="margin-top:8px"><span class="data-label">液体密度</span><span class="data-value" id="valLiqRho">1.0 g/cm³</span></div>
+    </div>
+
+    <div class="panel-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M6 20V4M18 20v-6"/></svg> 力分析</h3>
+      <div class="data-row"><span class="data-label" style="color:#DC2626">重力 G ↓</span><span class="data-value" id="valG2" style="color:#DC2626">2.70 N</span></div>
+      <div class="data-row"><span class="data-label" style="color:#2563EB">浮力 F浮 ↑</span><span class="data-value" id="valFb" style="color:#2563EB">0.00 N</span></div>
+      <div class="data-row"><span class="data-label" style="color:#059669">拉力 F拉 ↑</span><span class="data-value" id="valFt" style="color:#059669">2.70 N</span></div>
+      <div class="data-row"><span class="data-label">浸入体积</span><span class="data-value" id="valVsub">0 cm³</span></div>
+      <div id="immersionBadge" style="margin-top:4px;font-size:11px;color:#1D4ED8;font-weight:600;background:#EFF6FF;display:inline-flex;padding:2px 10px;border-radius:100px">浸入 0%</div>
+    </div>
+
+    <div class="panel-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 显示选项</h3>
+      <div class="toggle-row">
+        <span class="data-label">力的箭头</span>
+        <div class="toggle-switch on" id="forceToggle" onclick="toggleForces()"></div>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>
+      重置实验
+    </button>
+  </div>
+</div>
+
+<!-- Knowledge section - full width below experiment -->
+<div class="knowledge-section">
+  <div class="knowledge-card">
+    <div class="card-header"><div class="accent"></div><h2>阿基米德原理</h2></div>
+    <div class="card-body">
+      <div class="formula-lg" id="knowledgeFormula1"></div>
+      <div id="liveFormulaCalc" class="live-calc"></div>
+      <p>浸在液体中的物体受到向上的浮力，浮力的大小等于物体排开的液体所受的重力。</p>
+      <ul>
+        <li><strong>F浮</strong> — 浮力（单位：N）</li>
+        <li><strong>ρ液</strong> — 液体密度（单位：kg/m³）</li>
+        <li><strong>g</strong> — 重力加速度（约 9.8 N/kg，计算时常取 10）</li>
+        <li><strong>V排</strong> — 物体排开液体的体积（单位：m³）</li>
+      </ul>
+      <p style="margin-top:12px;color:#6B7280;font-size:12px">实验方法：称量法测浮力 → F浮 = G - F示（弹簧测力计空气中读数 - 液体中读数）</p>
+    </div>
+  </div>
+
+  <div class="knowledge-card">
+    <div class="card-header"><div class="accent"></div><h2>浮沉条件</h2></div>
+    <div class="card-body">
+      <p>物体的浮沉取决于重力 G 和浮力 F浮 的大小关系：</p>
+      <ul>
+        <li><strong>上浮</strong>：F浮 > G（ρ物 &lt; ρ液）→ 最终漂浮</li>
+        <li><strong>悬浮</strong>：F浮 = G（ρ物 = ρ液）→ 停在液体中任意位置</li>
+        <li><strong>下沉</strong>：F浮 &lt; G（ρ物 > ρ液）→ 沉到容器底部</li>
+        <li><strong>漂浮</strong>：物体静止在液面上，F浮 = G，V排 &lt; V物</li>
+      </ul>
+      <p style="margin-top:8px;color:#1D4ED8;font-size:12px;font-weight:600">考点提醒：漂浮和悬浮都是 F浮 = G，但漂浮物体部分露出液面。</p>
+    </div>
+  </div>
+
+  <div class="knowledge-card example">
+    <div class="card-header"><div class="accent"></div><h2>典型例题</h2></div>
+    <div class="card-body">
+      <p><strong>题目：</strong>一个体积为 100cm³ 的铝块（密度 2.7g/cm³），挂在弹簧测力计下浸没在水中，求：</p>
+      <p>（1）铝块受到的浮力；（2）弹簧测力计的示数</p>
+      <div class="solve">
+        G = ρ铝 × g × V = 2.7×10³ × 10 × 100×10⁻⁶ = 2.7 N<br/>
+        F浮 = ρ水 × g × V排 = 1.0×10³ × 10 × 100×10⁻⁶ = 1.0 N<br/>
+        F示 = G - F浮 = 2.7 - 1.0 = <strong style="color:#1D4ED8">1.7 N</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ad placeholder hidden for now -->
+</div>
+<script>
+const materials = {
+  al:   { name:'Al', rho: 2.7, color:'url(#alGrad)', stroke:'#2563EB' },
+  fe:   { name:'Fe', rho: 7.8, color:'url(#feGrad)', stroke:'#4B5563' },
+  wood: { name:'Wood', rho: 0.6, color:'url(#woodGrad)', stroke:'#92400E' }
+};
+const liquids = {
+  water: { name:'Water', rho: 1.0 },
+  salt:  { name:'Salt water', rho: 1.15 },
+  oil:   { name:'Oil', rho: 0.8 }
+};
+
+let mat = 'al', liq = 'water';
+let objY = 200; // SVG y of object top
+let objVol = 100;
+let isDragging = false;
+let showForces = true;
+let records = [];
+
+const g = 10;
+const baseVol = 100;
+const baseObjH = 40, baseObjW = 50;
+const waterTop0 = 225; // initial water surface y
+const containerTop = 210, containerBot = 408;
+
+function getVolumeScale() {
+  return Math.cbrt(objVol / baseVol);
+}
+
+function getObjectDims() {
+  const s = getVolumeScale();
+  return { w: baseObjW * s, h: baseObjH * s };
+}
+
+function getG() { return materials[mat].rho * objVol / 1000 * g; }
+
+function getImmersionFrac() {
+  const waterY = waterTop0; // simplified
+  const { h } = getObjectDims();
+  const objBot = objY + h;
+  const objTop = objY;
+  if (objBot <= waterY) return 0; // above water
+  if (objTop >= waterY) return Math.min(1, (objBot - waterY) / h);
+  // partially submerged
+  return Math.min(1, (objBot - waterY) / h);
+}
+
+function getFb() {
+  const frac = getImmersionFrac();
+  const Vsub = frac * objVol; // cm³
+  return liquids[liq].rho * Vsub / 1000 * g;
+}
+
+function updateDisplay() {
+  const G = getG();
+  const frac = getImmersionFrac();
+  const Fb = getFb();
+  const Ft = Math.max(0, G - Fb);
+  const Vsub = frac * objVol;
+  const rhoL = liquids[liq].rho;
+  const FbCalc = rhoL * g * Vsub / 1000;
+  const FtCalc = Math.max(0, G - FbCalc);
+  const dims = getObjectDims();
+  const objW = dims.w;
+  const objH = dims.h;
+
+  // Panel values
+  document.getElementById('valG').textContent = G.toFixed(2) + ' N';
+  document.getElementById('valG2').textContent = G.toFixed(2) + ' N';
+  document.getElementById('valFb').textContent = Fb.toFixed(2) + ' N';
+  document.getElementById('valFt').textContent = Ft.toFixed(2) + ' N';
+  document.getElementById('valVsub').textContent = Vsub.toFixed(0) + ' cm³';
+  document.getElementById('valVol').textContent = objVol.toFixed(0) + ' cm³';
+  document.getElementById('volumeVal').textContent = objVol.toFixed(0) + ' cm³';
+  document.getElementById('immersionBadge').textContent = '浸入 ' + (frac * 100).toFixed(0) + '%';
+  const calcEl = document.getElementById('liveFormulaCalc');
+  if (calcEl) {
+    calcEl.innerHTML =
+      '<div><span class="muted">Fb</span> = rho_liq x g x Vsub / 1000</div>' +
+      '<div>= ' + rhoL.toFixed(2) + ' × ' + g + ' × ' + Vsub.toFixed(0) + ' / 1000</div>' +
+      '<div>= <strong>' + FbCalc.toFixed(2) + ' N</strong></div>' +
+      '<div style="margin-top:6px"><span class="muted">Ft</span> = G - Fb</div>' +
+      '<div>= ' + G.toFixed(2) + ' - ' + FbCalc.toFixed(2) + ' = <strong>' + FtCalc.toFixed(2) + ' N</strong></div>';
+  }
+
+  // Scale reading
+  document.getElementById('scaleReading').textContent = Ft.toFixed(1) + 'N';
+  const pointerY = 10 + (Ft / 5) * 72; // 5N full scale
+  document.getElementById('scalePointer').setAttribute('y1', pointerY);
+  document.getElementById('scalePointer').setAttribute('y2', pointerY);
+
+  // Object position
+  document.getElementById('objectBody').setAttribute('x', 200 - objW / 2);
+  document.getElementById('objectBody').setAttribute('y', objY);
+  document.getElementById('objectBody').setAttribute('width', objW);
+  document.getElementById('objectBody').setAttribute('height', objH);
+  document.getElementById('objectLabel').setAttribute('x', 200);
+  document.getElementById('objectLabel').setAttribute('y', objY + objH * 0.62);
+  document.getElementById('wireLine').setAttribute('y2', objY);
+
+  // Immersion display
+  if (frac > 0) {
+    document.getElementById('immersionDisplay').setAttribute('opacity', '1');
+    document.getElementById('immersionPct').textContent = (frac * 100).toFixed(0) + '%';
+  } else {
+    document.getElementById('immersionDisplay').setAttribute('opacity', '0');
+  }
+
+  // Ripples
+  document.getElementById('ripples').setAttribute('opacity', frac > 0 ? '0.5' : '0');
+  document.querySelectorAll('#ripples ellipse').forEach(e => { e.setAttribute('cy', waterTop0); });
+
+  // Status hint
+  const st = document.getElementById('statusText');
+  if (frac === 0) st.textContent = '向下拖拽物体入水';
+  else if (frac < 1) st.textContent = '部分浸没';
+  else st.textContent = '完全浸没';
+
+  // Force arrows
+  if (showForces && frac > 0) {
+    document.getElementById('forceArrows').setAttribute('opacity', '1');
+    // Position arrows relative to object
+    const arrowG = document.getElementById('arrowG');
+    const arrowF = document.getElementById('arrowF');
+    const arrowT = document.getElementById('arrowT');
+    // G arrow (right side, pointing down)
+    arrowG.querySelector('line').setAttribute('y1', objY + 10);
+    arrowG.querySelector('line').setAttribute('y2', objY + 10 + G * 15);
+    arrowG.querySelector('polygon').setAttribute('points',
+      `${135},${objY+8+G*15} ${140},${objY+18+G*15} ${145},${objY+8+G*15}`);
+    arrowG.querySelector('text').setAttribute('y', objY + 20 + G * 7);
+    // Fb arrow (left side, pointing up)
+    const fbLen = Fb * 15;
+    arrowF.querySelector('line').setAttribute('y1', objY + objH - 5);
+    arrowF.querySelector('line').setAttribute('y2', objY + objH - 5 - fbLen);
+    arrowF.querySelector('polygon').setAttribute('points',
+      `${95},${objY+objH-3-fbLen} ${100},${objY+objH-13-fbLen} ${105},${objY+objH-3-fbLen}`);
+    arrowF.querySelector('text').setAttribute('y', objY + objH - fbLen/2);
+    // Ft arrow (top, pointing up)
+    const ftLen = Ft * 15;
+    arrowT.querySelector('line').setAttribute('y1', objY);
+    arrowT.querySelector('line').setAttribute('y2', objY - ftLen);
+    arrowT.querySelector('polygon').setAttribute('points',
+      `${115},${objY-ftLen+2} ${120},${objY-ftLen-8} ${125},${objY-ftLen+2}`);
+    arrowT.querySelector('text').setAttribute('y', objY - ftLen/2);
+  } else if (!showForces || frac === 0) {
+    document.getElementById('forceArrows').setAttribute('opacity', '0');
+  }
+}
+
+function selectMaterial(m) {
+  mat = m;
+  const obj = materials[m];
+  document.getElementById('objectBody').setAttribute('fill', obj.color);
+  document.getElementById('objectBody').setAttribute('stroke', obj.stroke);
+  document.getElementById('objectLabel').textContent = obj.name + ' block';
+  document.getElementById('valMat').textContent = obj.name;
+  document.getElementById('valRho').textContent = obj.rho + ' g/cm³';
+
+  // Shelf selection indicator
+  const sx = m === 'al' ? 8 : (m === 'fe' ? 64 : 120);
+  document.getElementById('shelfSelect').setAttribute('x', sx);
+
+  // Reset position
+  objY = 200;
+  updateDisplay();
+}
+
+function setVolume(v) {
+  objVol = parseFloat(v);
+  updateDisplay();
+}
+
+function setLiquid(l) {
+  liq = l;
+  document.querySelectorAll('.liquid-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['water','salt','oil'][i] === l);
+  });
+  document.getElementById('valLiqRho').textContent = liquids[l].rho + ' g/cm³';
+
+  // Change water color
+  const colors = { water: 'rgba(59,130,246,', salt: 'rgba(34,197,94,', oil: 'rgba(234,179,8,' };
+  const base = colors[l] || colors.water;
+  // Simplified: just update display
+  updateDisplay();
+}
+
+function toggleForces() {
+  showForces = !showForces;
+  document.getElementById('forceToggle').classList.toggle('on', showForces);
+  updateDisplay();
+}
+
+// Drag logic
+const svgEl = document.getElementById('canvas');
+function svgPoint(e) {
+  const pt = svgEl.createSVGPoint();
+  const rect = svgEl.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  pt.x = (touch.clientX - rect.left) / rect.width * 700;
+  pt.y = (touch.clientY - rect.top) / rect.height * 440;
+  return pt;
+}
+
+let dragOffsetY = 0;
+const objEl = document.getElementById('objectGroup');
+
+function onStart(e) {
+  const p = svgPoint(e);
+  const dims = getObjectDims();
+  const left = 200 - dims.w / 2;
+  if (p.x >= left && p.x <= left + dims.w && p.y >= objY && p.y <= objY + dims.h) {
+    isDragging = true;
+    dragOffsetY = p.y - objY;
+    objEl.style.cursor = 'grabbing';
+    objEl.style.transition = 'none';
+    e.preventDefault();
+  }
+}
+function onMove(e) {
+  if (!isDragging) return;
+  const p = svgPoint(e);
+  const dims = getObjectDims();
+  objY = Math.max(120, Math.min(containerBot - dims.h, p.y - dragOffsetY));
+  updateDisplay();
+  e.preventDefault();
+}
+function onEnd(e) {
+  if (!isDragging) return;
+  isDragging = false;
+  objEl.style.cursor = 'grab';
+
+  // Wood floats: if wood and fully submerged, float up
+  if (mat === 'wood' && getImmersionFrac() >= 0.5) {
+    // Float to equilibrium: ρ物/ρ液 fraction submerged
+    const fracEq = materials.wood.rho / liquids[liq].rho;
+    if (fracEq < 1) {
+      const dims = getObjectDims();
+      const eqY = waterTop0 - dims.h * (1 - fracEq);
+      objY = eqY;
+      updateDisplay();
+    }
+  }
+}
+
+svgEl.addEventListener('mousedown', onStart);
+svgEl.addEventListener('mousemove', onMove);
+svgEl.addEventListener('mouseup', onEnd);
+svgEl.addEventListener('mouseleave', onEnd);
+svgEl.addEventListener('touchstart', onStart, {passive:false});
+svgEl.addEventListener('touchmove', onMove, {passive:false});
+svgEl.addEventListener('touchend', onEnd);
+
+function recordData() {
+  const frac = getImmersionFrac();
+  const Fb = getFb();
+  const Ft = Math.max(0, getG() - Fb);
+  records.push({
+    mat: materials[mat].name,
+    liq: liquids[liq].name,
+    rhoL: liquids[liq].rho,
+    vol: objVol.toFixed(0),
+    Vsub: (frac * objVol).toFixed(0),
+    Fb: Fb.toFixed(2),
+    Ft: Ft.toFixed(2)
+  });
+  let html = '<table class="data-table"><tr><th>#</th><th>物体</th><th>液体</th><th>V</th><th>V排</th><th>F浮</th><th>F拉</th></tr>';
+  records.forEach((r, i) => {
+    html += `<tr><td>${i+1}</td><td>${r.mat}</td><td>${r.liq}</td><td>${r.vol}</td><td>${r.Vsub}</td><td>${r.Fb}</td><td>${r.Ft}</td></tr>`;
+  });
+  html += '</table>';
+  document.getElementById('dataTableArea').innerHTML = html;
+}
+
+function resetAll() {
+  mat = 'al'; liq = 'water'; objVol = 100; records = [];
+  objY = 200;
+  selectMaterial('al');
+  setLiquid('water');
+  document.getElementById('volumeSlider').value = '100';
+  document.getElementById('dataTableArea').innerHTML = '';
+  showForces = true;
+  document.getElementById('forceToggle').classList.add('on');
+  updateDisplay();
+}
+
+function renderFormulas() {
+  try {
+    // formula1 removed from panel, only render in knowledge section
+    katex.render('F_{\\text{浮}} = \\rho_{\\text{液}} \\cdot g \\cdot V_{\\text{排}}', document.getElementById('knowledgeFormula1'), { throwOnError: false, displayMode: true });
+  } catch(e) {}
+}
+
+updateDisplay();
+renderFormulas();
+if (localStorage.getItem('buoy2-guide-seen')) { const g2 = document.getElementById('guideOverlay'); if(g2) g2.style.display='none'; } else { localStorage.setItem('buoy2-guide-seen','1'); }
+</script>
+<script src="/shared/theme.js">
+(function tryKatex(n) {
+  if (window.katex) { renderFormulas(); return; }
+  if (n < 50) setTimeout(() => tryKatex(n + 1), 100);
+})(0);
+</script>
+<script src="/shared/lab-utils.js"></script>
+<div style="text-align:center;padding:20px;font-size:12px;color:#666;"><a href="https://beian.miit.gov.cn/" target="_blank" style="color:#666;">京ICP备2026012917号-2</a></div></body>
+</html>
